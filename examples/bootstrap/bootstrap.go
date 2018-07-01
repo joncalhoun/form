@@ -1,5 +1,5 @@
 // Produces a form like:
-// https://www.dropbox.com/s/rusvyi8t21do0h6/Screenshot%202018-07-01%2012.10.28.png?dl=0&raw=1
+// https://www.dropbox.com/s/72z88osbcwik26n/Screenshot%202018-07-01%2014.13.31.png?dl=0&raw=1
 
 package main
 
@@ -29,7 +29,9 @@ var inputTpl = `
 
 func main() {
 	tpl := template.Must(template.New("").Parse(inputTpl))
-	fb := form.NewBuilder(tpl)
+	fb := form.Builder{
+		InputTemplate: tpl,
+	}
 
 	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"inputs_for": fb.Inputs,

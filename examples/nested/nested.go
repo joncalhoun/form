@@ -24,7 +24,9 @@ var inputTpl = `
 
 func main() {
 	tpl := template.Must(template.New("").Parse(inputTpl))
-	fb := form.NewBuilder(tpl)
+	fb := form.Builder{
+		InputTemplate: tpl,
+	}
 
 	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
 		"inputs_for": fb.Inputs,
@@ -58,13 +60,9 @@ func main() {
 		case http.MethodGet:
 			w.Header().Set("Content-Type", "text/html")
 			pageTpl.Execute(w, nestedForm{
-				Name:  "Michael Scott",
-				Email: "michael@dunder.com",
-				Address: address{
-					Street1: "123 Thats What She Said Blvd",
-					City:    "Scranton",
-					State:   "PA",
-				},
+				Name:    "Michael Scott",
+				Email:   "michael@dunder.com",
+				Address: nil,
 			})
 			return
 		case http.MethodPost:
@@ -93,7 +91,7 @@ func main() {
 type nestedForm struct {
 	Name    string
 	Email   string
-	Address address
+	Address *address
 }
 
 type address struct {
