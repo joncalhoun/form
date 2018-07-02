@@ -82,7 +82,7 @@ func main() {
 			Name:    "Jon Calhoun",
 			Email:   "jon@calhoun.io",
 			Bio:     "I like to write Go code!",
-			Ignored: "info here should be ignored entirely becasue of the \"-\" form tag value",
+			Ignored: "info here should be ignored entirely because of the \"-\" form tag value",
 		})
 	})
 	http.ListenAndServe(":3000", nil)
