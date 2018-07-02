@@ -17,6 +17,7 @@ var inputTpl = `
 {{end}}
 `
 
+// Address is an example type used to demonstrate the form package.
 type Address struct {
 	Street1 string `form:"label=Street;placeholder=123 Sample St"`
 	Street2 string `form:"label=Street (cont);placeholder=Apt 123"`
