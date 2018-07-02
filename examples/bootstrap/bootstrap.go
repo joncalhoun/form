@@ -92,7 +92,7 @@ type userForm struct {
 	Name  string
 	Email string `form:"type=email"`
 
-	Password     string `form:"type=password`
+	Password     string `form:"type=password"`
 	Confirmation string `form:"display=Password Confirmation;type=password"`
 
 	Bio string `form:"type=textarea;placeholder=Tell us a bit about yourself"`
