@@ -9,7 +9,109 @@ Easily create HTML forms with Go structs.
 
 ## Overview
 
-The `form` package makes it easy to take a Go struct and turn it into an HTML form using whatever HTML format you want. Below is an example, along with the output. This entire example can be found in the [examples/readme](examples/readme) directory.
+The `form` package makes it easy to take a Go struct and turn it into an HTML form using whatever HTML format you want. Below is an example, along with the output, but first let's just look at an example of what I mean.
+
+Let's say you have a Go struct that looks like this:
+
+```go
+type customer struct {
+	Name    string
+	Email   string
+	Address *address
+}
+
+type address struct {
+	Street1 string
+	Street2 string
+	City    string
+	State   string
+	Zip     string `form:"label=Postal Code"`
+}
+```
+
+Now you want to generate an HTML form for it, but that is somewhat annoying if you want to persist user-entered values if there is an error, or if you want to support loading URL query params and auto-filling the form for the user. With this package you can very easily do both of those things simply by defining what the HTML for an input field should be:
+
+```html
+<div class="mb-4">
+	<label class="block text-grey-darker text-sm font-bold mb-2" {{with .ID}}for="{{.}}"{{end}}>
+		{{.Label}}
+	</label>
+	<input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight {{if errors}}border-red{{end}}" {{with .ID}}id="{{.}}"{{end}} type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}}>
+	{{range errors}}
+		<p class="text-red pt-2 text-xs italic">{{.}}</p>
+	{{end}}
+</div>
+```
+
+This particular example is using [Tailwind CSS](https://tailwindcss.com/docs/what-is-tailwind/) to style the values, along with the `errors` template function which is provided via this `form` package when it creates the inputs for each field.
+
+Now we can render this entire struct as a form by simply using the `inputs_for` template function which is provided by the `form.Builder`'s `FuncMap` method:
+
+```html
+<form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/" method="post">
+  {{inputs_for .Customer}}
+  <!-- ... add buttons here -->
+</form>
+```
+
+And with it we will generate an HTML form like the one below:
+
+![Example output from the forms package](example.png)
+
+Data set in the `.Customer` variable in our template will also be used when rendering the form, which is why you see `Michael Scott` and `michael@dunder.com` in the screenshot - these were set in the `.Customer` and were thus used to set the input's value.
+
+Error rendering is also possible, but requires the usage of the `inputs_and_errors_for` template function, and you need to pass in errors that implement the `fieldError` interface (shown below, but NOT exported):
+
+```go
+type fieldError interface {
+	FieldError() (field, err string)
+}
+```
+
+For instance, in [examples/errors/errors.go](examples/errors/errors.go) we pass data similar the following into our template when executing it:
+
+```go
+data := struct {
+  Form   customer
+  Errors []error
+}{
+  Form: customer{
+    Name:    "Michael Scott",
+    Email:   "michael@dunder.com",
+    Address: nil,
+  },
+  Errors: []error{
+    fieldError{
+      Field: "Email",
+      Issue: "is already taken",
+    },
+    fieldError{
+      Field: "Address.Street1",
+      Issue: "is required",
+    },
+    ...
+  },
+}
+tpl.Execute(w, data)
+```
+
+And then in the template we call the `inputs_and_errors_for` function:
+
+```html
+<form class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4" action="/" method="post">
+  {{inputs_and_errors_for .Form .Errors}}
+  <!-- ... buttons here -->
+</form>
+```
+
+And we get an output like this:
+
+![Example output from the forms package with errors](examples/errors/errors.png)
+
+
+## Complete Examples
+
+This entire example can be found in the [examples/readme](examples/readme) directory. Additional examples can also be found in the [examples/](examples/) directory and are a great way to see how this package could be used.
 
 **Source Code**
 
@@ -48,9 +150,7 @@ func main() {
 		InputTemplate: tpl,
 	}
 
-	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"inputs_for": fb.Inputs,
-	}).Parse(`
+	pageTpl := template.Must(template.New("").Funcs(fb.FuncMap()).Parse(`
 		<html>
 		<body>
 			<form>
@@ -141,6 +241,11 @@ If you also need to parse forms created by this package, I recommend using the [
 
 There is an example of this in the [examples/tailwind](examples/tailwind) directory.
 
+## Rendering errors
+
+If you want to render errors, see the [examples/errors/errors.go](examples/errors/errors.go) example and most notably check out the `inputs_and_errors_for` function provided to templates via the `Builder.FuncMap()` function.
+
+*TODO: Add some better examples here, but the provided code sample **is** a complete example.*
 
 ## This may have bugs
 
@@ -156,39 +261,6 @@ This section is mostly for myself to jot down notes, but feel free to read away.
 #### Parsing forms
 
 Long term this could also support parsing forms, but gorilla/schema does a great job of that already so I don't see any reason to at this time. It would likely be easier to just make the default input names line up with what gorilla/schema expects and provide examples for how to use the two together.
-
-#### Error rendering
-
-I could also look into ways to handle errors and add messages to forms. This shouldn't be *too* hard to do. It would probably be something like an optional argument passed into the form builder and then we process it looking for implementations of an interface like:
-
-```go
-for _, err := range errors {
-  if fe, ok := err.(interface{
-    Field() string
-    Message() string
-  }); ok {
-    map[fe.Field()] = fe.Message()
-  }
-}
-```
-
-Then we could pass it as an `Error` field each time we render:
-
-```html
-<div>
-	<label>
-		{{.Label}}
-	</label>
-	<input name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}} class="{{with .Errors}}border-red{{end}}">
-  {{range .Errors}}
-    <p class="text-red-dark py-2 text-sm">{{.}}</p>
-  {{end}}
-	{{with .Footer}}
-		<p class="text-grey pt-2 text-xs italic">{{.}}</p>
-	{{end}}
-</div>
-```
-
 
 #### Checkboxes and other data types
 

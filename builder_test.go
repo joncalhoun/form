@@ -39,7 +39,11 @@ func TestBuilder_Inputs(t *testing.T) {
 			b := &Builder{
 				InputTemplate: tc.tpl,
 			}
-			if got := b.Inputs(tc.arg); !reflect.DeepEqual(got, tc.want) {
+			got, err := b.Inputs(tc.arg)
+			if err != nil {
+				t.Errorf("Builder.Inputs() err = %v, want %v", err, nil)
+			}
+			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("Builder.Inputs() = %v, want %v", got, tc.want)
 			}
 		})
