@@ -33,9 +33,7 @@ func main() {
 		InputTemplate: tpl,
 	}
 
-	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"inputs_for": fb.Inputs,
-	}).Parse(`
+	pageTpl := template.Must(template.New("").Funcs(fb.FuncMap()).Parse(`
 		<html>
 		<body>
 			<form>

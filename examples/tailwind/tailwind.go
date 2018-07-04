@@ -29,9 +29,7 @@ func main() {
 		InputTemplate: tpl,
 	}
 
-	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"inputs_for": fb.Inputs,
-	}).Parse(`
+	pageTpl := template.Must(template.New("").Funcs(fb.FuncMap()).Parse(`
 <html>
 <head>
 	<link href="https://cdn.jsdelivr.net/npm/tailwindcss/dist/tailwind.min.css" rel="stylesheet">
@@ -44,9 +42,6 @@ func main() {
 				<button class="bg-blue hover:bg-blue-dark text-white font-bold py-2 px-4 rounded" type="submit">
 					Sign In
 				</button>
-				<a class="inline-block align-baseline font-bold text-sm text-blue hover:text-blue-darker" href="#">
-					Forgot Password?
-				</a>
 			</div>
 		</form>
 		<p class="text-center text-grey text-xs">

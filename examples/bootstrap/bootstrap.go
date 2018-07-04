@@ -33,9 +33,7 @@ func main() {
 		InputTemplate: tpl,
 	}
 
-	pageTpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"inputs_for": fb.Inputs,
-	}).Parse(`
+	pageTpl := template.Must(template.New("").Funcs(fb.FuncMap()).Parse(`
 <html>
 <head>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
