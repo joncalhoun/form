@@ -109,6 +109,14 @@ And we get an output like this:
 ![Example output from the forms package with errors](examples/errors/errors.png)
 
 
+## Installation
+
+To install this package, simply `go get` it:
+
+```
+go get github.com/joncalhoun/form
+```
+
 ## Complete Examples
 
 This entire example can be found in the [examples/readme](examples/readme) directory. Additional examples can also be found in the [examples/](examples/) directory and are a great way to see how this package could be used.
