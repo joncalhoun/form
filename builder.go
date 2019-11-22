@@ -7,6 +7,8 @@
 package form
 
 import (
+	"errors"
+	"fmt"
 	"html/template"
 	"strings"
 )
@@ -81,7 +83,7 @@ func (b *Builder) Inputs(v interface{}, errs ...error) (template.HTML, error) {
 		return "", err
 	}
 	fields := fields(v)
-	errors := errors(errs)
+	errors := fieldErrors(errs)
 	var html template.HTML
 	for _, field := range fields {
 		var sb strings.Builder
@@ -180,11 +182,12 @@ type fieldError interface {
 // Any errors that implement this interface are then used to build the
 // slice of errors for the field, meaning you can provide multiple
 // errors for the same field and all will be utilized.
-func errors(errs []error) map[string][]string {
+func fieldErrors(errs []error) map[string][]string {
 	ret := make(map[string][]string)
 	for _, err := range errs {
-		fe, ok := err.(fieldError)
-		if !ok {
+		var fe fieldError
+		if !errors.As(err, &fe) {
+			fmt.Println(err, "isnt field error")
 			continue
 		}
 		field, fieldErr := fe.FieldError()
