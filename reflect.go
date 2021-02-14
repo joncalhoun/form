@@ -21,11 +21,7 @@ func valueOf(v interface{}) reflect.Value {
 	}
 	// If we have a pointer or interface let's try to get the underlying
 	// element
-	
-	if(!rv.CanInterface()){
-	
-		return rv
-	}
+
 	
 	for rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
 		rv = rv.Elem()
@@ -57,7 +53,15 @@ func fields(v interface{}, names ...string) []field {
 		// simplest way to do this is to recursively call `fields` but
 		// to provide the name of this struct field to be added as a prefix
 		// to the fields.
+		
+	
+		
 		if rf.Kind() == reflect.Struct {
+			
+		        if(!rf.CanInterface()){
+		           continue
+		        }
+			
 			ret = append(ret, fields(rf.Interface(), append(names, t.Field(i).Name)...)...)
 			continue
 		}
