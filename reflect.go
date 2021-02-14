@@ -54,13 +54,13 @@ func fields(v interface{}, names ...string) []field {
 		// to provide the name of this struct field to be added as a prefix
 		// to the fields.
 		
-	
+	        if(!rf.CanInterface()){
+		           continue
+		}
 		
 		if rf.Kind() == reflect.Struct {
 			
-		        if(!rf.CanInterface()){
-		           continue
-		        }
+		
 			
 			ret = append(ret, fields(rf.Interface(), append(names, t.Field(i).Name)...)...)
 			continue
