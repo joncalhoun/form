@@ -21,6 +21,12 @@ func valueOf(v interface{}) reflect.Value {
 	}
 	// If we have a pointer or interface let's try to get the underlying
 	// element
+	
+	if(!rv.CanInterface()){
+	
+		return rv
+	}
+	
 	for rv.Kind() == reflect.Ptr || rv.Kind() == reflect.Interface {
 		rv = rv.Elem()
 	}
