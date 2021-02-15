@@ -1,10 +1,18 @@
 package form
 
 import (
+	"fmt"
 	"html/template"
 	"reflect"
 	"strings"
+	"regexp"
 )
+
+
+var selects map[string]map[string]interface{}
+var matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z][0-9]+)")
+var matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
+var matchNumbers = regexp.MustCompile("([A-Za-z]+)([0-9]+)")
 
 // valueOf is basically just reflect.ValueOf, but if the Kind() of the
 // value is a pointer or interface it will try to get the reflect.Value
@@ -13,6 +21,7 @@ import (
 //
 // This is used to make the rest of the fields function simpler.
 func valueOf(v interface{}) reflect.Value {
+
 	rv := reflect.ValueOf(v)
 	// If a nil pointer is passed in but has a type we can recover, but I
 	// really should just panic and tell people to fix their shitty code.
@@ -27,6 +36,17 @@ func valueOf(v interface{}) reflect.Value {
 		rv = rv.Elem()
 	}
 	return rv
+}
+
+func RegisterSelect(key string,opts map[string]interface{}){
+
+if(selects==nil){
+	selects = make(map[string]map[string]interface{})
+}
+
+selects[key]=opts
+
+
 }
 
 func fields(v interface{}, names ...string) []field {
@@ -54,7 +74,7 @@ func fields(v interface{}, names ...string) []field {
 		// to provide the name of this struct field to be added as a prefix
 		// to the fields.
 		
-	        if(!rf.CanInterface()){
+		if(!rf.CanInterface()){
 		           continue
 		}
 		
@@ -77,8 +97,8 @@ func fields(v interface{}, names ...string) []field {
 		name := append(names, t.Field(i).Name)
 		f := field{
 			Name:        strings.Join(name, "."),
-			Label:       t.Field(i).Name,
-			Placeholder: t.Field(i).Name,
+			Label:       fromCamelCase(t.Field(i).Name),
+			Placeholder: fromCamelCase(t.Field(i).Name),
 			Type:        "text",
 			Value:       rv.Field(i).Interface(),
 		}
@@ -87,6 +107,15 @@ func fields(v interface{}, names ...string) []field {
 	}
 	return ret
 }
+
+
+func fromCamelCase(str string) string {
+	snake := matchFirstCap.ReplaceAllString(str, "${1} ${2}")
+	snake  = matchAllCap.ReplaceAllString(snake, "${1} ${2}")
+	snake = matchNumbers.ReplaceAllString(snake, "${1} ${2}")
+	return string(snake)
+}
+
 
 func applyTags(f *field, tags map[string]string) {
 	if v, ok := tags["name"]; ok {
@@ -111,6 +140,42 @@ func applyTags(f *field, tags map[string]string) {
 		// Probably shouldn't be HTML but whatever.
 		f.Footer = template.HTML(v)
 	}
+
+	var lns []string
+
+	for k,v := range tags{
+
+		lns = append(lns,fmt.Sprintf(`%s=%q`,k,v))
+
+	}
+
+	f.Attrs = template.HTMLAttr(strings.Join(lns," "))
+
+
+	if(f.Type=="select" || f.Type=="checkbox"){
+
+         if it,oks := selects[f.Name]; oks{
+
+         	f.Items = it
+            //this block allows us to set the select value as an output ie CA=California, f.Value is CA and f.SelectValue is California
+         	for v,k := range it {
+         		if(k==f.Value){
+         			f.SelectValue = v
+				}
+
+			}
+
+
+		}
+
+
+
+		if v, ok := tags["select"]; ok {
+			f.SelectType = template.HTMLAttr(v)
+		}
+
+	}
+
 }
 
 func parseTags(tags string) map[string]string {
@@ -143,5 +208,9 @@ type field struct {
 	Type        string
 	ID          string
 	Value       interface{}
+	SelectValue interface{}
 	Footer      template.HTML
+	Items       map[string]interface{}
+	SelectType template.HTMLAttr
+	Attrs template.HTMLAttr
 }
