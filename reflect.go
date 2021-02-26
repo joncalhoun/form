@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"strings"
 	"regexp"
+	"time"
 )
 
 
@@ -68,21 +69,27 @@ func fields(v interface{}, names ...string) []field {
 		if t.Field(i).Type.Kind() == reflect.Ptr && rf.IsNil() {
 			rf = reflect.New(t.Field(i).Type.Elem()).Elem()
 		}
+		
+	
 
 		// If this is a struct it has nested fields we need to add. The
 		// simplest way to do this is to recursively call `fields` but
 		// to provide the name of this struct field to be added as a prefix
 		// to the fields.
 		
+		 
+		
 		if(!rf.CanInterface()){
+    		      
 		           continue
 		}
 		
-		if rf.Kind() == reflect.Struct {
-			
-		
-			
+		if rf.Kind() == reflect.Struct && rf.Type()!=reflect.TypeOf(time.Time{}) {
+
+ 
 			ret = append(ret, fields(rf.Interface(), append(names, t.Field(i).Name)...)...)
+	
+			
 			continue
 		}
 
@@ -92,8 +99,12 @@ func fields(v interface{}, names ...string) []field {
 		// we overwrite defaults with any provided tags.
 		tags := parseTags(t.Field(i).Tag.Get("form"))
 		if _, ok := tags["-"]; ok {
+    		
 			continue
 		}
+		
+
+		
 		name := append(names, t.Field(i).Name)
 		f := field{
 			Name:        strings.Join(name, "."),
@@ -150,6 +161,15 @@ func applyTags(f *field, tags map[string]string) {
 	}
 
 	f.Attrs = template.HTMLAttr(strings.Join(lns," "))
+
+
+    if (f.Type=="date") {
+        
+        tm := f.Value.(time.Time)
+        
+        f.Value = tm.Format("2006-01-02")
+        
+    }
 
 
 	if(f.Type=="select" || f.Type=="checkbox"){

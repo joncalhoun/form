@@ -92,6 +92,8 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 
 	fields := fields(v)
+	
+
 	errors := fieldErrors(errs)
 	var html template.HTML
 	for _, field := range fields {
