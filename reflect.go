@@ -38,7 +38,7 @@ func fields(v interface{}, names ...string) []field {
 	t := rv.Type()
 	ret := make([]field, 0, t.NumField())
 	for i := 0; i < t.NumField(); i++ {
-		rf := rv.Field(i)
+		rf := valueOf(rv.Field(i))
 		// If this is a nil pointer, create a new instance of the element.
 		// This could probably be done in a simpler way given that we
 		// typically recur with this value, but this works so I'm letting it
