@@ -1,10 +1,11 @@
 package form
 
 import (
-	"fmt"
+	"github.com/Masterminds/sprig"
 	"html/template"
-	"strings"
 	"io/ioutil"
+	"strings"
+	"time"
 )
 
 var basetmpl string
@@ -14,6 +15,7 @@ type Form struct {
     selectMap map[string]map[string]interface{}
 	Action string
 	Method string
+	Skip []string
 }
 
 func init() {
@@ -30,12 +32,10 @@ func init() {
     <input {{.Attrs}} type="{{.Type}}"  class="form-check-input" {{with .ID}}id="{{.}}"{{end}} name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}}>
     {{else if eq .Type "select" }}
     <select {{.Attrs}} class="form-control" {{with .ID}}id="{{.}}"{{end}} name="{{.Name}}" {{.SelectType}}>
-
         {{ $myval := .Value }}
         {{ if gt (len .Placeholder) 0 }}
         <option value="" >{{ .Placeholder }}</option>
         {{ end }}
-
         {{ range $v,$k := .Items}}
           <option {{ if eq $myval $k  }}selected="selected"{{end}}value="{{$k}}">{{$v}}</option>
         {{end}}
@@ -60,20 +60,31 @@ func New(pth ...string) (*Form,error){
 	}else{
 		p = ""
 	}
-
 	frm, errf := ioutil.ReadFile(p)
 	if errf != nil {
-		fmt.Println(errf)
 		frmstr = basetmpl
 	}else{
 
 		frmstr = string(frm)
 	}
 
-	tpl := template.Must(template.New("form").Parse(frmstr))
+	tpl := template.Must(template.New("form").Funcs(sprig.FuncMap()).Funcs(template.FuncMap{
+		"datetimelocal": func(val interface{}) string{
+			return val.(time.Time).Format("2006-01-02T15:04")
+		},
+		"datetime": func(val interface{}) string{
+			return val.(time.Time).Format("01/02/2006 15:04")
+		},
+	}).Parse(frmstr))
 
-	return &Form{Tpl: tpl},nil
 
+	return &Form{Tpl: tpl},errf
+
+}
+
+func (f *Form) SkipField(skip string){
+
+  f.Skip = append(f.Skip,skip)
 }
 
 func (f *Form) Select(nm string,mp map[string]interface{}){
@@ -86,20 +97,33 @@ func (f *Form) Select(nm string,mp map[string]interface{}){
 
 }
 
+
+
 func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
-
-
-
 	fields := fields(v)
-	
 
 	errors := fieldErrors(errs)
 	var html template.HTML
 	for _, field := range fields {
 
-		if(field.Type=="select" || field.Type=="checkbox" ){
+		dump := false
 
+
+
+		for _,sv := range f.Skip {
+
+
+			if(sv == field.Name){
+				dump = true
+				break
+			}
+		}
+
+		if(dump==true){continue}
+
+
+		if(field.Type=="select" || field.Type=="checkbox" ){
 
 			if it,oks := f.selectMap[field.Name]; oks{
 
@@ -120,12 +144,12 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 	var sb strings.Builder
 	f.Tpl.Funcs(template.FuncMap{
-	"errors": func() []string {
-	if errs, ok := errors[field.Name]; ok {
-	return errs
-	}
-	return nil
-	},
+		"errors": func() []string {
+		if errs, ok := errors[field.Name]; ok {
+		return errs
+		}
+		return nil
+		},
 	})
 	err := f.Tpl.Execute(&sb, field)
 	if err != nil {

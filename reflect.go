@@ -76,9 +76,7 @@ func fields(v interface{}, names ...string) []field {
 		// simplest way to do this is to recursively call `fields` but
 		// to provide the name of this struct field to be added as a prefix
 		// to the fields.
-		
-		 
-		
+
 		if(!rf.CanInterface()){
     		      
 		           continue
@@ -129,6 +127,9 @@ func fromCamelCase(str string) string {
 
 
 func applyTags(f *field, tags map[string]string) {
+
+
+
 	if v, ok := tags["name"]; ok {
 		f.Name = v
 	}
@@ -160,7 +161,9 @@ func applyTags(f *field, tags map[string]string) {
 
 	}
 
+
 	f.Attrs = template.HTMLAttr(strings.Join(lns," "))
+
 
 
     if (f.Type=="date") {
