@@ -75,7 +75,7 @@ func New(pth ...string) (*Form,error){
 		"datetime": func(val interface{}) string{
 			return val.(time.Time).Format("01/02/2006 15:04")
 		},
-		"date": func(val interface{}) string{
+		"datelocal": func(val interface{}) string{
 			return val.(time.Time).Format("01/02/2006")
 		},
 	}).Parse(frmstr))
