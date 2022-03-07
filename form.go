@@ -15,6 +15,7 @@ type Form struct {
     selectMap map[string]map[string]interface{}
 	Action string
 	Method string
+	Prefix string
 	Skip []string
 }
 
@@ -69,14 +70,40 @@ func New(pth ...string) (*Form,error){
 	}
 
 	tpl := template.Must(template.New("form").Funcs(sprig.FuncMap()).Funcs(template.FuncMap{
-		"datetimelocal": func(val interface{}) string{
-			return val.(time.Time).Format("2006-01-02T15:04")
+		"datetimelocal": func(val interface{}) (out string){
+
+			switch val.(type) {
+			case string:
+				out = val.(string)
+			default:
+				out = val.(time.Time).Format("2006-01-02T15:04")
+			}
+
+			return out
+
 		},
-		"datetime": func(val interface{}) string{
-			return val.(time.Time).Format("01/02/2006 15:04")
+		"datetime": func(val interface{}) (out string){
+
+			switch val.(type) {
+			case string:
+				out = val.(string)
+			default:
+				out = val.(time.Time).Format("01/02/2006 15:04")
+			}
+
+			return out
+
 		},
-		"datelocal": func(val interface{}) string{
-			return val.(time.Time).Format("01/02/2006")
+		"datelocal": func(val interface{}) (out string){
+
+			switch val.(type) {
+			case string:
+				out = val.(string)
+			default:
+				out = val.(time.Time).Format("01/02/2006")
+			}
+
+			return out
 		},
 	}).Parse(frmstr))
 
@@ -105,17 +132,15 @@ func (f *Form) Select(nm string,mp map[string]interface{}){
 func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 	fields := fields(v)
-
 	errors := fieldErrors(errs)
 	var html template.HTML
 	for _, field := range fields {
 
+		field.Prefix = f.Prefix
+
 		dump := false
 
-
-
 		for _,sv := range f.Skip {
-
 
 			if(sv == field.Name){
 				dump = true
@@ -146,6 +171,7 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 
 	var sb strings.Builder
+
 	f.Tpl.Funcs(template.FuncMap{
 		"errors": func() []string {
 		if errs, ok := errors[field.Name]; ok {
@@ -154,6 +180,7 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 		return nil
 		},
 	})
+
 	err := f.Tpl.Execute(&sb, field)
 	if err != nil {
 	return "", err

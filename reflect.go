@@ -191,7 +191,28 @@ func applyTags(f *field, tags map[string]string) {
 
 		}
 
+		if vi, ok := tags["items"]; ok {
 
+			parts := strings.Split(vi,"&")
+
+			if(f.Items==nil){
+
+				f.Items = make(map[string]interface{})
+			}
+
+			for _,pp := range parts {
+
+
+				p3 := strings.Split(pp,":")
+
+				if(len(p3)>1) {
+					f.Items[p3[1]]=p3[0];
+				}
+
+			}
+
+
+		}
 
 		if v, ok := tags["select"]; ok {
 			f.SelectType = template.HTMLAttr(v)
@@ -228,6 +249,7 @@ type field struct {
 	Name        string
 	Label       string
 	Placeholder string
+	Prefix		string //used for grouping forms
 	Type        string
 	ID          string
 	Value       interface{}
