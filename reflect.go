@@ -188,7 +188,7 @@ func applyTags(f *field, tags map[string]string) {
 				p3 := strings.Split(pp,":")
 				if(len(p3)>1) {
 					f.Items[p3[1]]=p3[0];
-					if(p3[1]==f.Value){
+					if(p3[0]==f.Value){
 						f.SelectValue = p3[1]
 					}
 				}
