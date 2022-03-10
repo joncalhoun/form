@@ -69,8 +69,6 @@ func fields(v interface{}, names ...string) []field {
 		if t.Field(i).Type.Kind() == reflect.Ptr && rf.IsNil() {
 			rf = reflect.New(t.Field(i).Type.Elem()).Elem()
 		}
-		
-	
 
 		// If this is a struct it has nested fields we need to add. The
 		// simplest way to do this is to recursively call `fields` but
@@ -177,20 +175,6 @@ func applyTags(f *field, tags map[string]string) {
 
 	if(f.Type=="select" || f.Type=="checkbox"){
 
-         if it,oks := selects[f.Name]; oks{
-
-         	f.Items = it
-            //this block allows us to set the select value as an output ie CA=California, f.Value is CA and f.SelectValue is California
-         	for v,k := range it {
-         		if(k==f.Value){
-         			f.SelectValue = v
-				}
-
-			}
-
-
-		}
-
 		if vi, ok := tags["items"]; ok {
 
 			parts := strings.Split(vi,"&")
@@ -210,9 +194,23 @@ func applyTags(f *field, tags map[string]string) {
 				}
 
 			}
+		}
+
+
+		if it,oks := selects[f.Name]; oks{
+
+         	f.Items = it
+            //this block allows us to set the select value as an output ie CA=California, f.Value is CA and f.SelectValue is California
+         	for v,k := range it {
+         		if(k==f.Value){
+         			f.SelectValue = v
+				}
+
+			}
 
 
 		}
+
 
 		if v, ok := tags["select"]; ok {
 			f.SelectType = template.HTMLAttr(v)
