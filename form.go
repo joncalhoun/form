@@ -2,7 +2,8 @@ package form
 
 import (
 	"github.com/Masterminds/sprig"
-	"html/template"
+    "github.com/nyaruka/phonenumbers"
+    "html/template"
 	"io/ioutil"
 	"strings"
 	"time"
@@ -82,6 +83,11 @@ func New(pth ...string) (*Form,error){
 			return out
 
 		},
+		"phoneusa" : func(val string) (string){
+			num, e := phonenumbers.Parse(val, "US")
+			if(e!=nil){return val}
+			return phonenumbers.Format(num, phonenumbers.NATIONAL)
+		},
 		"datetime": func(val interface{}) (out string){
 
 			switch val.(type) {
@@ -146,6 +152,18 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 				dump = true
 				break
 			}
+
+			last := sv[len(sv)-1:]
+			//nested struct, lets block anything with that dot
+			if(last=="."){
+
+				if(strings.Contains(field.Name,sv)){
+					dump = true
+					break
+				}
+
+			}
+
 		}
 
 		if(dump==true){continue}
