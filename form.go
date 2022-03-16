@@ -111,6 +111,17 @@ func New(pth ...string) (*Form,error){
 
 			return out
 		},
+		"date": func(val interface{}) (out string){
+
+			switch val.(type) {
+			case string:
+				out = val.(string)
+			default:
+				out = val.(time.Time).Format("2006-01-02")
+			}
+
+			return out
+		},
 	}).Parse(frmstr))
 
 
