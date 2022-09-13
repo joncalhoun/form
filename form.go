@@ -2,22 +2,26 @@ package form
 
 import (
 	"github.com/Masterminds/sprig"
-    "github.com/nyaruka/phonenumbers"
-    "html/template"
+	"github.com/jinzhu/copier"
+	"github.com/nyaruka/phonenumbers"
+	"html/template"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
 var basetmpl string
+var basepath string
+var Funcs template.FuncMap
 
 type Form struct {
-	Tpl *template.Template
-    selectMap map[string]map[string]interface{}
-	Action string
-	Method string
-	Prefix string
-	Skip []string
+	Tpl       *template.Template
+	selectMap map[string]map[string]interface{}
+	Action    string
+	Method    string
+	Prefix    string
+	Skip      []string
 }
 
 func init() {
@@ -52,26 +56,41 @@ func init() {
 
 }
 
-func New(pth ...string) (*Form,error){
-    var frmstr string
-    var p string
+//Load a base path for a template, optional
+func BasePath(bp string) {
 
-    if(len(pth)>0){
+	basepath = bp
 
-    	p = pth[0]
-	}else{
+}
+
+func New(pth ...string) (*Form, error) {
+	var frmstr string
+	var p string
+
+	if len(pth) > 0 {
+
+		p = pth[0]
+	} else {
 		p = ""
 	}
+
+	if len(basepath) > 0 {
+
+		p = filepath.Join(basepath, p)
+
+	}
+
 	frm, errf := ioutil.ReadFile(p)
 	if errf != nil {
 		frmstr = basetmpl
-	}else{
+	} else {
 
 		frmstr = string(frm)
 	}
 
-	tpl := template.Must(template.New("form").Funcs(sprig.FuncMap()).Funcs(template.FuncMap{
-		"datetimelocal": func(val interface{}) (out string){
+	//embed our own funcs as well as sprig
+	tpl := template.Must(template.New("form").Funcs(Funcs).Funcs(sprig.FuncMap()).Funcs(template.FuncMap{
+		"datetimelocal": func(val interface{}) (out string) {
 
 			switch val.(type) {
 			case string:
@@ -83,12 +102,14 @@ func New(pth ...string) (*Form,error){
 			return out
 
 		},
-		"phoneusa" : func(val string) (string){
+		"phoneusa": func(val string) string {
 			num, e := phonenumbers.Parse(val, "US")
-			if(e!=nil){return val}
+			if e != nil {
+				return val
+			}
 			return phonenumbers.Format(num, phonenumbers.NATIONAL)
 		},
-		"datetime": func(val interface{}) (out string){
+		"datetime": func(val interface{}) (out string) {
 
 			switch val.(type) {
 			case string:
@@ -100,7 +121,7 @@ func New(pth ...string) (*Form,error){
 			return out
 
 		},
-		"datelocal": func(val interface{}) (out string){
+		"datelocal": func(val interface{}) (out string) {
 
 			switch val.(type) {
 			case string:
@@ -111,7 +132,7 @@ func New(pth ...string) (*Form,error){
 
 			return out
 		},
-		"date": func(val interface{}) (out string){
+		"date": func(val interface{}) (out string) {
 
 			switch val.(type) {
 			case string:
@@ -124,27 +145,40 @@ func New(pth ...string) (*Form,error){
 		},
 	}).Parse(frmstr))
 
-
-	return &Form{Tpl: tpl},errf
+	return &Form{Tpl: tpl}, errf
 
 }
 
-func (f *Form) SkipField(skip string){
+func (f *Form) SkipField(skip string) {
 
-  f.Skip = append(f.Skip,skip)
+	f.Skip = append(f.Skip, skip)
 }
 
-func (f *Form) Select(nm string,mp map[string]interface{}){
+func (f *Form) Select(nm string, mp map[string]interface{}) {
 
-	if(f.selectMap==nil){
+	if f.selectMap == nil {
 		f.selectMap = make(map[string]map[string]interface{})
 	}
 
-	f.selectMap[nm]=mp
+	f.selectMap[nm] = mp
 
 }
 
+///copy a source item to dest item and render, for example if you have a db result struct and a form struct, you can copy the db values to the form and then render it
 
+func (f *Form) RenderBind(from interface{}, to interface{}, errs ...error) (template.HTML, error) {
+
+	ce := copier.Copy(&to, &from)
+
+	if ce != nil {
+
+		errs = append(errs, ce)
+
+	}
+
+	return f.Render(to, errs...)
+
+}
 
 func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
@@ -157,18 +191,18 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 		dump := false
 
-		for _,sv := range f.Skip {
+		for _, sv := range f.Skip {
 
-			if(sv == field.Name){
+			if sv == field.Name {
 				dump = true
 				break
 			}
 
 			last := sv[len(sv)-1:]
 			//nested struct, lets block anything with that dot
-			if(last=="."){
+			if last == "." {
 
-				if(strings.Contains(field.Name,sv)){
+				if strings.Contains(field.Name, sv) {
 					dump = true
 					break
 				}
@@ -177,18 +211,19 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 		}
 
-		if(dump==true){continue}
+		if dump == true {
+			continue
+		}
 
+		if field.Type == "select" || field.Type == "checkbox" {
 
-		if(field.Type=="select" || field.Type=="checkbox" ){
-
-			if it,oks := f.selectMap[field.Name]; oks{
+			if it, oks := f.selectMap[field.Name]; oks {
 
 				field.Items = it
 
 				//this block allows us to set the select value as an output ie CA=California, f.Value is CA and f.SelectValue is California
-				for v,k := range it {
-					if(k==field.Value){
+				for v, k := range it {
+					if k == field.Value {
 						field.SelectValue = v
 					}
 
@@ -198,23 +233,22 @@ func (f *Form) Render(v interface{}, errs ...error) (template.HTML, error) {
 
 		}
 
+		var sb strings.Builder
 
-	var sb strings.Builder
+		f.Tpl.Funcs(template.FuncMap{
+			"errors": func() []string {
+				if errs, ok := errors[field.Name]; ok {
+					return errs
+				}
+				return nil
+			},
+		})
 
-	f.Tpl.Funcs(template.FuncMap{
-		"errors": func() []string {
-		if errs, ok := errors[field.Name]; ok {
-		return errs
+		err := f.Tpl.Execute(&sb, field)
+		if err != nil {
+			return "", err
 		}
-		return nil
-		},
-	})
-
-	err := f.Tpl.Execute(&sb, field)
-	if err != nil {
-	return "", err
-	}
-	html = html + template.HTML(sb.String())
+		html = html + template.HTML(sb.String())
 	}
 	return html, nil
 

@@ -109,6 +109,26 @@ And we get an output like this:
 ![Example output from the forms package with errors](examples/errors/errors.png)
 
 
+## Alternative Syntax
+
+```
+    var u User{}
+    var ufrm SignupForm{}
+    
+    //optionally provide a path to look at templates
+    form.BasePath("/tmp/form")
+    
+    //Create the form
+    
+    frm, err := form.New("/formbasic.html")
+    if(err!=nil){//handle error}
+    frm.Render(ufrm)
+    //- or -
+    frm.RenderBind(u,ufrm) //this would copy the values into ufrm before rendering
+
+
+```
+
 ## Installation
 
 To install this package, simply `go get` it:
