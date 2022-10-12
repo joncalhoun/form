@@ -196,6 +196,45 @@ func Test_fields(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "custom css class",
+			arg: struct {
+				Name string `form:"class=custom-css-class"`
+			}{
+				Name: "Michael Scott",
+			},
+			want: []field{
+				{
+					Name:        "Name",
+					Label:       "Name",
+					Placeholder: "Name",
+					Type:        "text",
+					Value:       "Michael Scott",
+					Class:       "custom-css-class",
+				},
+			},
+		},
+		{
+			name: "custom attr",
+			arg: struct {
+				Name string `form:"attrs={\"ts-action\":\"class+ loading, 'parent .parent'\", \"ts-trigger\": \"click\"}"`
+			}{
+				Name: "Michael Scott",
+			},
+			want: []field{
+				{
+					Name:        "Name",
+					Label:       "Name",
+					Placeholder: "Name",
+					Type:        "text",
+					Value:       "Michael Scott",
+					Attrs: []attr{
+						attr{Attr: "ts-action", Value: "class+ loading, 'parent .parent'"},
+						attr{Attr: "ts-trigger", Value: "click"},
+					},
+				},
+			},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

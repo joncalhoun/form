@@ -1,6 +1,8 @@
 package form
 
 import (
+	"encoding/json"
+	"fmt"
 	"html/template"
 	"reflect"
 	"strings"
@@ -101,6 +103,12 @@ func applyTags(f *field, tags map[string]string) {
 		// Probably shouldn't be HTML but whatever.
 		f.Footer = template.HTML(v)
 	}
+	if v, ok := tags["class"]; ok {
+		f.Class = template.HTMLEscapeString(v)
+	}
+	if v, ok := tags["attrs"]; ok {
+		f.Attrs = parseAttrs(v)
+	}
 }
 
 func parseTags(tags string) map[string]string {
@@ -126,6 +134,26 @@ func parseTags(tags string) map[string]string {
 	return ret
 }
 
+func parseAttrs(attrs string) []attr {
+	attrs = strings.TrimSpace(attrs)
+	var ret = []attr{}
+
+	if len(attrs) == 0 {
+		return ret
+	}
+	var attrVects map[string]string
+
+	if err := json.Unmarshal([]byte(attrs), &attrVects); err != nil {
+		fmt.Errorf("Error unmarshaller json attributes: %v", err)
+	}
+
+	for a, v := range attrVects {
+		ret = append(ret, attr{Attr: a, Value: v})
+	}
+
+	return ret
+}
+
 type field struct {
 	Name        string
 	Label       string
@@ -134,4 +162,15 @@ type field struct {
 	ID          string
 	Value       interface{}
 	Footer      template.HTML
+	Class       string
+	Attrs       []attr
+}
+
+type attr struct {
+	Attr  string
+	Value string
+}
+
+func (a *attr) Render() template.HTMLAttr {
+	return template.HTMLAttr(fmt.Sprintf(`%s="%s"`, a.Attr, a.Value))
 }
