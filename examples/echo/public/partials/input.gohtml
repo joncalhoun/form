@@ -1,0 +1,11 @@
+{{define "input"}}
+    <div class="mb-4">
+        <label class="block text-grey-darker text-sm font-bold mb-2" {{with .ID}}for="{{.}}"{{end}}>
+            {{.Label}}
+        </label>
+        <input class="shadow appearance-none border rounded w-full py-2 px-3 text-grey-darker leading-tight" {{with .ID}}id="{{.}}"{{end}} type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}}>
+        {{with .Footer}}
+            <p class="text-grey pt-2 text-xs italic">{{.}}</p>
+        {{end}}
+    </div>
+{{end}}
