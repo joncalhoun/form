@@ -137,7 +137,7 @@ var inputTpl = `
 <label {{with .ID}}for="{{.}}"{{end}}>
 	{{.Label}}
 </label>
-<input {{with .ID}}id="{{.}}"{{end}} type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}}>
+<input {{with .ID}}id="{{.}}"{{end}} type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}" {{with .Value}}value="{{.}}"{{end}} {{with .Class}}class="{{.}}"{{end}}>
 {{with .Footer}}
   <p>{{.}}</p>
 {{end}}
@@ -149,7 +149,7 @@ type Address struct {
 	City    string
 	State   string `form:"footer=Or your Province"`
 	Zip     string `form:"label=Postal Code"`
-	Country string
+	Country string `form:"class=specific-country-css-class"`
 }
 
 func main() {
@@ -211,7 +211,7 @@ func main() {
   <label >
     Country
   </label>
-  <input  type="text" name="Country" placeholder="Country" value="United States">
+  <input class="specific-country-css-class"  type="text" name="Country" placeholder="Country" value="United States">
 </form>
 ```
 

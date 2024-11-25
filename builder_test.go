@@ -11,7 +11,7 @@ import (
 
 func TestBuilder_Inputs(t *testing.T) {
 	tpl := template.Must(template.New("").Parse(strings.TrimSpace(`
-		<label>{{.Label}}</label><input type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}"{{with .Value}} value="{{.}}"{{end}}>
+		<label>{{.Label}}</label><input type="{{.Type}}" name="{{.Name}}" placeholder="{{.Placeholder}}"{{with .Value}} value="{{.}}"{{end}}{{with .Class}} class="{{.}}"{{end}}{{range .Attrs}} {{.Render}}{{end}}>
 	`)))
 	tests := []struct {
 		name string
@@ -25,14 +25,31 @@ func TestBuilder_Inputs(t *testing.T) {
 			arg: struct {
 				Name  string
 				Email string `form:"type=email;placeholder=bob@example.com"`
+				City  string `form:"class=custom-city-class"`
 			}{
 				Name: "Michael Scott",
+				City: "New York",
 			},
 			want: template.HTML(strings.Join([]string{
 				strings.TrimSpace(`
 					<label>Name</label><input type="text" name="Name" placeholder="Name" value="Michael Scott">`),
 				strings.TrimSpace(`
 					<label>Email</label><input type="email" name="Email" placeholder="bob@example.com">`),
+				strings.TrimSpace(`
+					<label>City</label><input type="text" name="City" placeholder="City" value="New York" class="custom-city-class">`),
+			}, "")),
+		},
+		{
+			name: "Custom attrs",
+			tpl:  tpl,
+			arg: struct {
+				Street string `form:"attrs={\"ts-action\":\"class+ loading, 'parent .parent'\", \"ts-trigger\": \"click\"}"`
+			}{
+				Street: "Mckinsey str.",
+			},
+			want: template.HTML(strings.Join([]string{
+				strings.TrimSpace(`
+					<label>Street</label><input type="text" name="Street" placeholder="Street" value="Mckinsey str." ts-action="class+ loading, 'parent .parent'" ts-trigger="click">`),
 			}, "")),
 		},
 	}
