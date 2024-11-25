@@ -196,6 +196,24 @@ func Test_fields(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "custom css class",
+			arg: struct {
+				Name string `form:"class=custom-css-class"`
+			}{
+				Name: "Michael Scott",
+			},
+			want: []field{
+				{
+					Name:        "Name",
+					Label:       "Name",
+					Placeholder: "Name",
+					Type:        "text",
+					Value:       "Michael Scott",
+					Class:       "custom-css-class",
+				},
+			},
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

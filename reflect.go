@@ -101,6 +101,9 @@ func applyTags(f *field, tags map[string]string) {
 		// Probably shouldn't be HTML but whatever.
 		f.Footer = template.HTML(v)
 	}
+	if v, ok := tags["class"]; ok {
+		f.Class = template.HTMLEscapeString(v)
+	}
 }
 
 func parseTags(tags string) map[string]string {
@@ -134,4 +137,5 @@ type field struct {
 	ID          string
 	Value       interface{}
 	Footer      template.HTML
+	Class       string
 }
